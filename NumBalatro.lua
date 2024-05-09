@@ -134,12 +134,14 @@ function SMODS.INIT.NumBalatro()
       --sendDebugMessage("Definition created successfully!")
       j_table[k] = j
       j:register()
-      j.loc_def = function()
-	    local results = {}
-		for _, key in pairs(v.loc_vars) do
-		  results[#results+1] = j.config.extra[key]
-		end
-        return results
+	  if not j.loc_def then
+        j.loc_def = function()
+	      local results = {}
+		  for _, key in pairs(v.loc_vars) do
+		    results[#results+1] = j.config.extra[key]
+		  end
+          return results
+        end
       end
       sendDebugMessage(tostring(j.name))
       for k2, v2 in pairs(j.loc_txt.text) do
@@ -229,26 +231,6 @@ function generate_badges(card, loc_vars)
 	return badges
 end
 
-function get_loc_vars(card)
-    if card.config.extra == nil then
-      sendDebugMessage(card.name.." lacking \"config.extra\".")
-      return nil
-    end
-    for k, v in pairs(newJokers) do
-      if v.name == card.name then
-        sendDebugMessage(card.name.." found!")
-        local loc_def = {}
-          for i=1, #v.loc_vars do
-            local val = v.loc_vars[i]
-            loc_def[#loc_def+1] = card.config.extra[val]
-          end
-        return loc_def
-      end
-    end
-    sendDebugMessage(card.name.." not found.")
-    return nil
-end
-
 local startrun_ref = Game.start_run
 function Game:start_run(args)
     startrun_ref(self,args)
@@ -259,6 +241,19 @@ function Game:start_run(args)
         --G.GAME.current_round.hands = 3
       end
     end
+end
+
+local generate_UIBox_ability_table_ref = Card.generate_UIBox_ability_table
+function Card:generate_UIBox_ability_table()
+  if self.ability and self.ability.name = "Seance" then
+    loc_vars = {
+	  0.5,
+	  0.5 * G.GAME.consumeable_usage_total.spectral + 1,
+	  "Straight Flush"
+	}
+	return generate_card_ui(self.config.center, nil, loc_vars, card_type, generate_badges(self, loc_vars))
+  end
+  return generate_UIBox_ability_table_ref(self)
 end
 
 local calculate_jokerref = Card.calculate_joker
