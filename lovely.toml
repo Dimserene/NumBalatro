@@ -1,0 +1,91 @@
+[manifest]
+version = "1.0.0"
+dump_lua = true
+priority = 0
+
+[[patches]]
+[patches.pattern]
+target = "game.lua"
+pattern = "G.FUNCS.skip_booster = function(e)"
+position = "after"
+overwrite = false
+payload = '''  G.GAME.boosters_skipped = (G.GAME.boosters_skipped or 0) + 1'''
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = "card.lua"
+pattern = "if pseudorandom('lucky_mult') < G.GAME.probabilities.normal/5 then"
+position = "at"
+overwrite = true
+payload = '''if pseudorandom('lucky_mult') < G.GAME.probabilities.normal/self.ability.odds_mult then'''
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = "card.lua"
+pattern = "elseif self.ability.name == 'Runner' then loc_vars = {self.ability.extra.chips, self.ability.extra.chip_mod}"
+position = "at"
+overwrite = true
+payload = '''elseif self.ability.name == 'Runner' then loc_vars = {self.ability.chips, self.ability.chip_mod, (self.ability.chips == 1 and "" or "s")}'''
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = "card.lua"
+pattern = "self.ability.mult = self.ability.mult + self.ability.extra"
+position = "before"
+payload = '''self.ability.extra = self.ability.increase + 1'''
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = "card.lua"
+pattern = "elseif self.ability.name == 'Seance' then loc_vars = {localize(self.ability.extra.poker_hand, 'poker_hands')}"
+position = "at"
+payload = '''elseif self.ability.name == 'Square Joker' then loc_vars = {self.ability.x_mult, self.ability.current}'''
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = "card.lua"
+pattern = "elseif self.ability.name == 'Square Joker' then loc_vars = {self.ability.extra.chips, self.ability.extra.chip_mod}"
+position = "at"
+payload = '''elseif self.ability.name == 'Square Joker' then loc_vars = {self.ability.chips, self.ability.chip_mod,self.ability.chips==1 and "" or "s"}'''
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = "card.lua"
+pattern = "if pseudorandom('lucky_money') < G.GAME.probabilities.normal/15 then"
+position = "at"
+overwrite = true
+payload = '''if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.odds_money then'''
+match_indent = true
+
+# [[patches]]
+# [patches.pattern]
+# target = "functions/common_events.lua"
+# pattern = "elseif _c.effect == 'Wild Card' then"
+# position = "at"
+# overwrite = true
+# payload = '''elseif _c.effect == 'Wild Card' then --testing injection'''
+# match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = "functions/common_events.lua"
+pattern = "elseif _c.effect == 'Lucky Card' then loc_vars = {G.GAME.probabilities.normal, _c.config.mult, 5, _c.config.p_dollars, 15}"
+position = "at"
+overwrite = true
+payload = '''elseif _c.effect == 'Lucky Card' then loc_vars = {G.GAME.probabilities.normal, cfg.mult, cfg.odds_mult, cfg.p_dollars, cfg.odds_money}'''
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = "game.lua"
+pattern = "m_lucky =   {max = 500, order = 9, name = \"Lucky Card\", set = \"Enhanced\", pos = {x=4,y=1}, effect = \"Lucky Card\", label = \"Lucky Card\", config = {mult=20, p_dollars = 20}},"
+position = "at"
+overwrite = true
+payload = '''m_lucky =   {max = 500, order = 9, name = "Lucky Card", set = "Enhanced", pos = {x=4,y=1}, effect = "Lucky Card", label = "Lucky Card", config = {mult=20, p_dollars = 20, odds_mult = 5, odds_money = 15}},'''
+match_indent = true
