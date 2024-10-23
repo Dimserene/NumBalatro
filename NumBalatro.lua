@@ -691,56 +691,56 @@
         },
         atlas = false
       },
-      matador = {
-        name = "Matador",
-        config = {
-          big_payout = 5,
-          small_payout = 3
-        },
-        loc_text = {
-          text = {
-            "Earn {C:money}$#1#{} when",
-            "{C:attention}Boss Blind{} ability is",
-            "triggered, and {C:money}$#2#{} per",
-            "{C:attention}debuffed{} or {C:attention}face-down{} card played"
-          }
-        },
-        loc_vars = {
-          "big_payout",
-          "small_payout",
-        },
-        atlas = false,
-        payout_small = function(self)
-          G.E_MANAGER:add_event(Event({
-          trigger = "before",
-          delay = 0.7,
-          blocking = true,
-          func = (function()
-            if G.GAME.blind:get_type() ~= 'Boss' then return true end
-            ease_dollars(self.ability.small_payout, true)
-            G.GAME.dollar_buffer = (G.GAME.dollar_buffer or 0) + self.ability.small_payout
-            card_eval_status_text(self, 'dollars', self.ability.small_payout, nil, nil, {instant = true})
-            G.GAME.dollar_buffer = 0;
-            return true
-          end
-          )}))
-          end,
-        payout_big = function(self)
-          G.E_MANAGER:add_event(Event({
-          trigger = "before",
-          delay = 0.7,
-          blocking = true,
-          func = (function()
-            if G.GAME.blind:get_type() ~= "Boss" then return true end
-            ease_dollars(self.ability.big_payout, true)
-            G.GAME.dollar_buffer = (G.GAME.dollar_buffer or 0) + self.ability.big_payout
-            card_eval_status_text(self, 'dollars', self.ability.big_payout, nil, nil, {instant = true})
-            G.GAME.dollar_buffer = 0;
-            return true
-          end
-          )}))
-          end,
-      },
+      -- matador = {
+        -- name = "Matador",
+        -- config = {
+          -- big_payout = 5,
+          -- small_payout = 3
+        -- },
+        -- loc_text = {
+          -- text = {
+            -- "Earn {C:money}$#1#{} when",
+            -- "{C:attention}Boss Blind{} ability is",
+            -- "triggered, and {C:money}$#2#{} per",
+            -- "{C:attention}debuffed{} or {C:attention}face-down{} card played"
+          -- }
+        -- },
+        -- loc_vars = {
+          -- "big_payout",
+          -- "small_payout",
+        -- },
+        -- atlas = false,
+        -- payout_small = function(self)
+          -- G.E_MANAGER:add_event(Event({
+          -- trigger = "before",
+          -- delay = 0.7,
+          -- blocking = true,
+          -- func = (function()
+            -- if G.GAME.blind:get_type() ~= 'Boss' then return true end
+            -- ease_dollars(self.ability.small_payout, true)
+            -- G.GAME.dollar_buffer = (G.GAME.dollar_buffer or 0) + self.ability.small_payout
+            -- card_eval_status_text(self, 'dollars', self.ability.small_payout, nil, nil, {instant = true})
+            -- G.GAME.dollar_buffer = 0;
+            -- return true
+          -- end
+          -- )}))
+          -- end,
+        -- payout_big = function(self)
+          -- G.E_MANAGER:add_event(Event({
+          -- trigger = "before",
+          -- delay = 0.7,
+          -- blocking = true,
+          -- func = (function()
+            -- if G.GAME.blind:get_type() ~= "Boss" then return true end
+            -- ease_dollars(self.ability.big_payout, true)
+            -- G.GAME.dollar_buffer = (G.GAME.dollar_buffer or 0) + self.ability.big_payout
+            -- card_eval_status_text(self, 'dollars', self.ability.big_payout, nil, nil, {instant = true})
+            -- G.GAME.dollar_buffer = 0;
+            -- return true
+          -- end
+          -- )}))
+          -- end,
+      -- },
       to_the_moon = {
         name = "To the Moon",
         config = {
