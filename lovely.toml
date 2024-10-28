@@ -63,6 +63,15 @@ overwrite = true
 payload = '''if pseudorandom('lucky_money') < G.GAME.probabilities.normal/self.ability.odds_money then'''
 match_indent = true
 
+[[patches]]
+[patches.pattern]
+target = "card.lua"
+pattern = "if G.GAME.blind.triggered then "
+position = "at"
+overwrite = true
+payload = '''if false then'''
+match_indent = true
+
 # [[patches]]
 # [patches.pattern]
 # target = "functions/common_events.lua"
@@ -89,3 +98,129 @@ position = "at"
 overwrite = true
 payload = '''m_lucky =   {max = 500, order = 9, name = "Lucky Card", set = "Enhanced", pos = {x=4,y=1}, effect = "Lucky Card", label = "Lucky Card", config = {mult=20, p_dollars = 20, odds_mult = 5, odds_money = 15}},'''
 match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = 'blind.lua'
+pattern = "if self.debuff then"
+position = 'before'
+payload = '''local old_level = G.GAME.hands[handname].level
+local old_size = G.hand.config.card_limit'''
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = 'functions/state_events.lua'
+pattern = "G.GAME.blind.triggered = true"
+position = 'at'
+payload = ''''''
+match_indent = true
+
+[[patches]]
+[patches.regex]
+target = 'functions/state_events.lua'
+pattern = '''( *)G\.CONTROLLER:save_cardarea_focus\('hand'\)
+
+( *)for k, v in ipairs\(G\.playing_cards\) do
+'''
+position = 'after'
+payload = '''
+    if (v.ability.forced_selection) then
+        for k, v in pairs(find_joker("Matador")) do
+            payout_small(v)
+        end
+    end
+                        '''
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = 'functions/misc_functions.lua'
+pattern = "local four_fingers = next(find_joker('Four Fingers'))"
+position = 'after'
+payload = '''local superposition = next(find_joker('Superposition'))'''
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = 'functions/common_events.lua'
+pattern = "to:emplace(card, nil, stay_flipped)"
+position = 'before'
+payload = '''card.flipped_by_blind = stay_flipped'''
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = 'functions/state_events.lua'
+pattern = "card_eval_status_text(scoring_hand[i], 'debuff')"
+position = 'after'
+payload = '''for k, v in pairs(find_joker("Matador")) do
+    payout_small(v)
+end
+G.GAME.blind.triggered = false'''
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = 'blind.lua'
+pattern = '''if any_selected then G.FUNCS.discard_cards_from_highlighted(nil, true) end'''
+position = 'after'
+payload = '''for k, v in pairs(find_joker("Matador")) do
+    payout_big(v)
+end'''
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = 'blind.lua'
+pattern = '''ease_dollars(-G.GAME.dollars, true)'''
+position = 'after'
+payload = '''for k, v in pairs(find_joker("Matador")) do
+    payout_big(v)
+end'''
+match_indent = true
+
+
+# [[patches]]
+# [patches.pattern]
+# target = 'blind.lua'
+# pattern = '''return math.max(math.floor(mult*0.5 + 0.5), 1), math.max(math.floor(hand_chips*0.5 + 0.5), 0), true'''
+# position = 'before'
+# payload = '''for k, v in pairs(find_joker("Matador")) do
+#     payout_big(v)
+# end'''
+# match_indent = true
+
+
+[[patches]]
+[patches.pattern]
+target = 'blind.lua'
+pattern = "delay(0.23)"
+position = 'after'
+payload = '''for k, v in pairs(find_joker("Matador")) do
+    payout_small(v,0.4)
+end'''
+match_indent = true
+
+[[patches]]
+[patches.regex]
+target = 'functions/state_events.lua'
+pattern = '''(?<indent>[\t ]*)    card_eval_status_text\(G.hand.cards\[i\], 'extra', nil, percent, nil, effects\[ii\].extra\)\n *end'''
+position = 'after'
+payload = '''
+
+                            if G.hand.cards[i].flipped_by_blind then
+                                G.hand.cards[i].flipped_by_blind = nil
+                            end'''
+match_indent = true
+
+# [[patches]]
+# [patches.regex]
+# target = 'blind.lua'
+# pattern = '''(?<indent>[\t ]*)end\nend\n\nfunction Blind:drawn_to_hand()'''
+# position = 'before'
+# payload = """if self.triggered == true or old_level > G.GAME.hands[handname].level or old_size > G.hand.config.card_limit then
+#     find_joker("Matador"):payout_big()
+# end
+# """
+# match_indent = true

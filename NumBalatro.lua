@@ -41,15 +41,6 @@
         "Hieroglyph"
       }
     end
-    -- SMODS.Enhancement:take_ownership('lucky', {
-        -- config =
-        -- {
-          -- odds_mult = 5,
-          -- mult = 20,
-          -- odds_money = 15,
-          -- p_dollars = 20,
-        -- }
-    -- })
     local ritual = {name="Current Stats",text={"{C:chips}+#1#{} Chips","{C:mult}+#2#{} Mult"}}
     bd.process_loc_text = function()
       SMODS.process_loc_text(G.localization.descriptions.Other, 'suit_bias', {name = suit_bias.name, text = suit_bias.text})
@@ -61,10 +52,11 @@
     {
       {
         key = "onearmed_bandit",
-        name = "One-Armed Bandit",        rarity = 2,
+        name = "One-Armed Bandit",
+        rarity = 2,
         cost = 7,
         config = {
-          odds_retrigger = 1
+          odds_retrigger = 10
         },
         loc_text = {
           text = {
@@ -110,7 +102,8 @@
       },
       {
         key = "punchclock",
-        name = "Punch Clock",        rarity = 2,
+        name = "Punch Clock",
+        rarity = 2,
         cost = 5,
         config = {
           chips = 40,
@@ -136,7 +129,8 @@
       },
       {
         key = "magicnumber",
-        name = "Magic Number",        rarity = 1,
+        name = "Magic Number",
+        rarity = 1,
         cost = 3,
         config = {
           per_chips = 30,
@@ -172,7 +166,8 @@
       },
       {
         key = "brickbybrick",
-        name = "Brick By Brick",        rarity = 1,
+        name = "Brick By Brick",
+        rarity = 1,
         cost = 5,
         config = {
         },
@@ -189,7 +184,8 @@
       },
       {
         key = "brothers_hamm",
-        name = "Brothers Hamm",        rarity = 1,
+        name = "Brothers Hamm",
+        rarity = 1,
         cost = 5,
         config = {
           h_size = 0
@@ -224,7 +220,8 @@
       },
       {
         key = "climbers",
-        name = "The Climbers",        rarity = 1,
+        name = "The Climbers",
+        rarity = 1,
         cost = 5,
         config = {
         },
@@ -381,20 +378,20 @@
         end,
         calculate = function(self, card, context)
           if context.before and #context.full_hand == 4 and not context.blueprint then
-            self.ability.chips = self.ability.chips + self.ability.chip_mod
-            self.ability.chip_mod = self.ability.chip_mod + 2
+            card.ability.chips = card.ability.chips + card.ability.chip_mod
+            card.ability.chip_mod = card.ability.chip_mod + 2
             return {
                 message = localize('k_upgrade_ex'),
                 colour = G.C.CHIPS,
-                card = self
+                card = card
             }
           end
           if context.joker_main and context.cardarea == G.jokers then
             return {
-              message = localize{type='variable',key='a_chips',vars={self.ability.chips}},
+              message = localize{type='variable',key='a_chips',vars={card.ability.chips}},
               colour = G.C.CHIPS,
-              chip_mod = self.ability.chips,
-              card = self
+              chip_mod = card.ability.chips,
+              card = card
             }
           end
         end,
@@ -442,17 +439,47 @@
           "current",
           "poker_hand"
         },
+        calculate = function(self, card, context)
+          if context.joker_main and context.cardarea == G.jokers and next(context.poker_hands["Straight"]) and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+            local card_types = {'Tarot','Planet','Spectral'}
+            local rand = pseudorandom('j_superposition') * 100
+            local idx = 1
+            if rand < 55 then
+              idx = 2
+            end
+            if rand < 10 then
+              idx = 3
+            end
+            G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
+            G.E_MANAGER:add_event(Event({
+                trigger = 'before',
+                delay = 0.0,
+                func = (function()
+                        local card = create_card(card_types[idx],G.consumeables, nil, nil, nil, nil, nil, 'sup')
+                        card:add_to_deck()
+                        G.consumeables:emplace(card)
+                        G.GAME.consumeable_buffer = 0
+                    return true
+                end)}))
+            return {
+                message = localize('k_plus_'..string.lower(card_types[idx])),
+                colour = G.C.SECONDARY_SET[card_types[idx]],
+                card = card
+            }
+          end
+        end,
         atlas = false
       },
       sly = {
         name = "Sly Joker",
         config = {
+          type = "Pair",
           t_chips = 22
         },
         loc_text = {
           text = {
-            "{C:chips}+#1#{} Chips for each",
-            "unique {C:attention}Pair{} or better",
+            "{C:chips}+#2#{} Chips for each",
+            "unique {C:attention}#1#{} or better",
             "in played hand"
           }
         },
@@ -469,16 +496,18 @@
       jolly = {
         name = "Jolly Joker",
         config = {
+          type = "Pair",
           t_mult = 6
         },
         loc_text = {
           text = {
-            "{C:mult}+#1#{} Mult for each",
-            "unique {C:attention}Pair{} or better",
+            "{C:mult}+#2#{} Mult for each",
+            "unique {C:attention}#1#{} or better",
             "in played hand"
           }
         },
         loc_vars = {
+          "type",
           "t_mult"
         },
         calculate = function(self, card, context)
@@ -509,17 +538,19 @@
       wily = {
         name = "Wily Joker",
         config = {
+          type = "Three of a Kind",
           t_chips = 33,
         },
         loc_text = {
           text = {
-            "{C:chips}+#1#{} Chips if hand",
-            "contains {C:attention}Three of a Kind{}",
-            "{C:chips}+#2#{} Chips if hand contains",
+            "{C:chips}+#2#{} Chips if hand",
+            "contains {C:attention}#1#{}",
+            "{C:chips}+#3#{} Chips if hand contains",
             "exactly {C:attention}3{} scoring cards",
           }
         },
         loc_vars = {
+          "type",
           "t_chips",
         },
         calculate = function(self, card, context)
@@ -532,17 +563,19 @@
       zany = {
         name = "Zany Joker",
         config = {
+          type = "Three of a Kind",
           t_mult = 6,
         },
         loc_text = {
           text = {
-            "{C:mult}+#1#{} Mult if hand",
-            "contains {C:attention}Three of a Kind{}",
-            "{C:mult}+#2#{} Mult if hand contains",
+            "{C:mult}+#2#{} Mult if hand",
+            "contains {C:attention}#1#{}",
+            "{C:mult}+#3#{} Mult if hand contains",
             "exactly {C:attention}3{} scoring cards",
           }
         },
         loc_vars = {
+          "type",
           "t_mult",
         },
         calculate = function(self, card, context)
@@ -573,13 +606,14 @@
       clever = {
         name = "Clever Joker",
         config = {
+          type = "Four of a Kind",
           t_chips = 44,
         },
         loc_text = {
           text = {
-            "{C:chips}+#1#{} Chips if hand",
-            "contains {C:attention}Four of a Kind{}",
             "{C:chips}+#2#{} Chips if hand",
+            "contains {C:attention}#1#{}",
+            "{C:chips}+#3#{} Chips if hand",
             "has exactly {C:attention}4{} scoring cards"
           }
         },
@@ -589,6 +623,7 @@
           end
         end,
         loc_vars = {
+          "type",
           "t_chips",
         },
         atlas = true
@@ -596,13 +631,14 @@
       mad = {
         name = "Mad Joker",
         config = {
+          type = "Four of a Kind",
           t_mult = 8,
         },
         loc_text = {
           text = {
-            "{C:mult}+#1#{} Mult if hand",
-            "contains {C:attention}Four of a Kind{}",
             "{C:mult}+#2#{} Mult if hand",
+            "contains {C:attention}1{}",
+            "{C:mult}+#3#{} Mult if hand",
             "has exactly {C:attention}4{} scoring cards"
           }
         },
@@ -612,6 +648,7 @@
           end
         end,
         loc_vars = {
+          "type",
           "t_mult",
         },
         atlas = true
@@ -662,85 +699,106 @@
       crazy = {
         name = "Crazy Joker",
         config = {
-          t_mult = 20
+          t_mult = 20,
+          type = "Straight"
         },
         loc_text = {
           text = {
-            "{C:mult}+#1#{} Mult if hand",
-            "contains a {C:attention}Straight{}"
+            "{C:mult}+#2#{} Mult if hand",
+            "contains a {C:attention}#1#{}"
           }
         },
         loc_vars = {
-          "t_mult"
+          "type",
+          "t_mult",
         },
         atlas = false
       },
       devious = {
         name = "Devious Joker",
         config = {
-          t_chips = 123
+          t_chips = 123,
+          type = "Straight"
         },
         loc_text = {
           text = {
-            "{C:chips}+#1#{} Chips if hand",
-            "contains a {C:attention}Straight{}"
+            "{C:chips}+#2#{} Chips if hand",
+            "contains a {C:attention}#1#{}"
           }
         },
         loc_vars = {
-          "t_chips"
+          "type",
+          "t_chips",
         },
         atlas = false
       },
-      -- matador = {
-        -- name = "Matador",
-        -- config = {
-          -- big_payout = 5,
-          -- small_payout = 3
-        -- },
-        -- loc_text = {
-          -- text = {
-            -- "Earn {C:money}$#1#{} when",
-            -- "{C:attention}Boss Blind{} ability is",
-            -- "triggered, and {C:money}$#2#{} per",
-            -- "{C:attention}debuffed{} or {C:attention}face-down{} card played"
-          -- }
-        -- },
-        -- loc_vars = {
-          -- "big_payout",
-          -- "small_payout",
-        -- },
-        -- atlas = false,
-        -- payout_small = function(self)
-          -- G.E_MANAGER:add_event(Event({
-          -- trigger = "before",
-          -- delay = 0.7,
-          -- blocking = true,
-          -- func = (function()
-            -- if G.GAME.blind:get_type() ~= 'Boss' then return true end
-            -- ease_dollars(self.ability.small_payout, true)
-            -- G.GAME.dollar_buffer = (G.GAME.dollar_buffer or 0) + self.ability.small_payout
-            -- card_eval_status_text(self, 'dollars', self.ability.small_payout, nil, nil, {instant = true})
-            -- G.GAME.dollar_buffer = 0;
-            -- return true
-          -- end
-          -- )}))
-          -- end,
-        -- payout_big = function(self)
-          -- G.E_MANAGER:add_event(Event({
-          -- trigger = "before",
-          -- delay = 0.7,
-          -- blocking = true,
-          -- func = (function()
-            -- if G.GAME.blind:get_type() ~= "Boss" then return true end
-            -- ease_dollars(self.ability.big_payout, true)
-            -- G.GAME.dollar_buffer = (G.GAME.dollar_buffer or 0) + self.ability.big_payout
-            -- card_eval_status_text(self, 'dollars', self.ability.big_payout, nil, nil, {instant = true})
-            -- G.GAME.dollar_buffer = 0;
-            -- return true
-          -- end
-          -- )}))
-          -- end,
-      -- },
+      matador = {
+        name = "Matador",
+        config = {
+          big_payout = 5,
+          small_payout = 3
+        },
+        loc_text = {
+          text = {
+            "Earn {C:money}$#2#{} per card affected by",
+            "a {C:attention}Boss Blind{},",
+            "and {C:money}$#1#{} when any other",
+            "{C:attention}Boss Blind{} ability is triggered",
+          }
+        },
+        loc_vars = {
+          "big_payout",
+          "small_payout",
+        },
+        atlas = false,
+        calculate = function(self,card,context)
+          if context.setting_blind then
+            card.ability.old_size = G.hand.config.card_limit
+            card.ability.old_hand = G.GAME.current_round.discards_left
+            card.ability.old_discard = G.GAME.current_round.discards_left
+          end
+          if context.first_hand_drawn then
+            if G.GAME.blind.triggered == true or card.facing == "back" or G.GAME.blind.mult > 2 or card.ability.old_size > G.hand.config.card_limit then
+              payout_big(card)
+            end
+            if card.ability.old_hand > G.GAME.current_round.hands_left then
+              for i = 1, card.ability.old_hand do
+                payout_big(card, 0.4)
+              end
+            end
+            if card.ability.old_discard > G.GAME.current_round.discards_left then
+              for i = 1, card.ability.old_discard+1 do
+                payout_big(card, 0.4)
+              end
+            end
+          end
+          if context.debuffed_hand then
+              payout_big(card)
+          end
+          if context.before then
+            local postage = true
+            for k, v in pairs(G.jokers.cards) do
+              if v.ability.crimson_heart_chosen then
+                payout_big(card)
+                break
+              end
+            end
+            for k, v in pairs(context.full_hand) do
+              --sendDebugMessage(v.base.name)
+              --sendDebugMessage("Is this flipped?")
+              --sendDebugMessage(v.flipped_by_blind == true and "Yes" or "No")
+              if v.flipped_by_blind == true then
+                payout_small(card, 0.4, v)
+                G.GAME.blind.triggered = false
+              end
+            end
+            sendDebugMessage("("..G.GAME.blind.old_level.." > "..G.GAME.hands[context.scoring_name].level..") ?")
+            if G.GAME.blind.old_level > G.GAME.hands[context.scoring_name].level then
+              payout_big(card)
+            end
+          end
+        end
+      },
       to_the_moon = {
         name = "To the Moon",
         config = {
@@ -1046,8 +1104,8 @@
         atlas = v.atlas and k or center.atlas,
         lc_atlas = v.atlas_hc and k or center.atlas,
         hc_atlas = v.atlas_hc and k.."_hc" or center.atlas,
-        calculate = v.calculate,
         config = v.config,
+        calculate = v.calculate,
         pos = (v.atlas or v.atlas_hc) and {x=0,y=0} or center.pos,
         blueprint_compat = v.blueprint or true,
         eternal_compat = v.eternal or true,
@@ -1058,9 +1116,9 @@
             if string.sub(val,1,4) == "odds" then
               table.insert(postage,G.GAME.probabilities.normal)
             end
-            table.insert(postage,card.ability[val])
-            if string.sub(val,1,2) == "t_" then
-              local maths = v.config[val] * ((v.name == "Wily Joker" or v.name == "Zany Joker") and 2 or 3)
+            table.insert(postage,v.config[val] or center.config[val])
+            if string.sub(val,1,2) == "t_" and type(postage[#postage]) == "number" then
+              local maths = postage[#postage] * ((v.name == "Wily Joker" or v.name == "Zany Joker") and 2 or 3)
               table.insert(postage,maths)
             end
           end
@@ -1123,6 +1181,15 @@ function Game:start_run(args)
       end
     end
     self.GAME.stocks = 0
+end
+
+local flip_ref = Card.flip
+function Card:flip() 
+  local postage = flip_ref(self)
+  if self.facing == 'front' then
+    self.flipped_by_blind = true
+  end
+  return postage
 end
 
 local generate_UIBox_ability_table_ref = Card.generate_UIBox_ability_table
@@ -1296,10 +1363,8 @@ function evaluate_poker_hand(hand)
     table.sort(results["Full House"], function(a,b)
       return a.T.x < b.T.x
     end)
-    results["top"] = results["Full House"]
     if next(results["Flush"]) then
       results["Flush House"] = results["Full House"]
-      results["top"] = results["Flush House"]
     end
     results["Two Pair"] = 
     {
@@ -1311,11 +1376,17 @@ function evaluate_poker_hand(hand)
      }
     }
   end
+  results["Straight"] = get_straight(hand)
+  if next(results["Straight"]) then
+    results["Straight Flush"] = (next(results["Straight"][1]) and next(results["Flush"])) and results["Straight"] or {nil}
+  end
+  local new_top = nil
   for k, v in pairs(order) do
-    sendDebugMessage(v..": "..((results[v] ~= nil and #results[v] > 0) and "Yes" or "No"))
+    --sendDebugMessage(v..": "..((results[v] ~= nil and #results[v] > 0) and "Yes" or "No"))
     if new_top == nil and next(results[v]) then
       new_top = v
       results.top = results[v]
+      G.GAME.blind.old_level = G.GAME.hands[v].level
     end
     for k2, v2 in pairs(results[v]) do
       for k3, v3 in pairs(v2) do
@@ -1324,6 +1395,112 @@ function evaluate_poker_hand(hand)
     end
   end
   return results
+end
+
+local get_straight_ref = get_straight
+function get_straight(hand)
+  sendDebugMessage("Override successful.")
+  local postage = {}
+  local results = {}
+  local can_loop = next(find_joker('Superposition'))
+  local four = next(find_joker('Four Fingers'))
+  local can_skip = next(find_joker('Shortcut'))
+  local skipped = false
+  if can_loop then
+    sendDebugMessage("Superposition detected.")
+  end
+  if can_skip then
+    sendDebugMessage("Shortcut detected.")
+  end
+  if #hand < (four and 4 or 5) then
+    return postage
+  end
+
+  table.sort(hand,
+    function(a,b)
+      if a:get_id() == b:get_id() then
+        return a.T.x < b.T.x
+      end
+      return a:get_id() < b:get_id()
+    end
+  )
+  local mail = ""
+  local postcard = ""
+  for k, v in pairs(hand) do
+    mail = mail..SMODS.Ranks[v.base.value].shorthand
+  end
+  for k, v in ipairs(SMODS.Rank.obj_buffer) do
+    postcard = postcard..SMODS.Ranks[v].shorthand
+  end
+  mail = string.gsub(mail,"10","T")
+  postcard = string.gsub(postcard,"10","T")
+  mail = mail..(can_loop and mail or "")
+  postcard = string.sub(postcard,-1)..(can_loop and postcard or "")..postcard
+  --sendDebugMessage(tostring(string.match(mail:sub(-2):sub(1,1),"%D")))
+  if mail:sub(-1) == postcard:sub(-1) and mail:sub(-2):sub(1,1):match("%d") then
+    mail = mail:sub(-1)..mail:sub(1,mail:len()-1)
+  end
+  local found = postcard:find(mail) ~= nil
+  if found and mail:len() >= (four and 4 or 5) then
+    --sendDebugMessage(mail.." is a straight.")
+    postage = hand
+    if four and mail:len() == 5 and not postcard:find(mail) then
+      postage:remove(((postcard:find(mail:sub(2))) and 1 or 5))
+    end
+  elseif can_skip then
+    local offset = 1
+    for i=2, mail:len() do
+      local prev = mail:sub(offset,i+offset-2)
+      local curr = mail:sub(offset,i+offset-1)
+      if postcard:find(mail)~=nil and (mail:len() == (four and 4 or 5)) then
+        --sendDebugMessage(postcard:sub(postcard:find(mail),mail:len()))
+        --sendDebugMessage(mail.." is a straight.")
+        postage = hand
+        break
+      elseif four and mail:len() == 5 and (postcard:find(mail:sub(2)) or postcard:find(mail:sub(1,4))) then
+        postage = hand
+        postage:remove((postcard:find(mail:sub(2)) and 1 or 5))
+        mail = (postcard:find(mail:sub(2)) and mail:sub(2) or mail:sub(1,4))
+        --sendDebugMessage(mail:sub(2).." and "..mail:sub(1,4))
+        --sendDebugMessage(mail.." is a four-fingered straight.")
+        break
+      elseif postcard:find(prev) and not postcard:find(curr) then
+        postcard = string.sub(postcard,1,postcard:find(prev)+i+offset-3)..string.sub(postcard,postcard:find(prev)+i+offset-1)
+        sendDebugMessage(postcard)
+        if postcard:find(mail)~=nil and (mail:len() == (four and 4 or 5)) then
+          --sendDebugMessage(postcard:sub(postcard:find(mail),mail:len()))
+          --sendDebugMessage(mail.." is a straight.")
+          postage = hand
+        end
+      elseif not postcard:find(curr) then
+        --sendDebugMessage("No.")
+        offset = offset + 1
+      end
+    end
+  elseif can_loop then
+    for i = 1, mail:len() do
+      mail = string.sub(mail,2)..string.sub(mail,1,1)
+      hand:insert(hand[1])
+      hand:remove(1)
+      if (postcard:find(mail) and mail:len() == four and 4 or 5) or (four and mail:len() == 5 and (postcard:find(mail:sub(2)) or postcard:find(mail:sub(1,4)))) then
+        --sendDebugMessage(mail.." is a"..((four and not postcard:find(mail)) and " four-fingered " or " ").."straight.")
+        postage = hand
+        if four and not postcard:find(mail) then
+          postage:remove((postcard:find(mail:sub(2)) and 1 or 5))
+        end
+        break
+      end
+    end
+  end
+  table.sort(hand, function(a,b) return a.T.x < b.T.x end)
+  table.sort(postage, function(a,b) return a.T.x < b.T.x end)
+  sendDebugMessage(#postage)
+  if #postage == 0 then
+    --sendDebugMessage(mail.." is not a straight.")
+    --sendDebugMessage(mail:sub(2).." and "..mail:sub(1,4).." are not four-fingered straights.")
+    postage = nil
+  end
+  return {postage}
 end
 
 local ease_dollars_ref = ease_dollars
@@ -1379,6 +1556,75 @@ function Card:remove_from_deck(from_debuff)
   if G.hand and self.ability.name == 'Brothers Hamm' then
     G.hand:change_size(-self.ability.h_size)
   end
+end
+
+function payout_small(card, delay, other_card)
+  if other_card then
+    G.E_MANAGER:add_event(Event({
+      trigger = "immediate",
+      blocking = true,
+      func = function()
+        other_card:juice_up()
+        return true
+      end
+    }))
+  end
+  G.E_MANAGER:add_event(Event({
+    trigger = "before",
+    delay = delay or 0.7,
+    blocking = true,
+    func = (function()
+      if G.GAME.blind:get_type() ~= 'Boss' then return true end
+      --sendDebugMessage("Small trigger detected, should pay out $"..card.ability.small_payout)
+      ease_dollars(card.ability.small_payout, true)
+      G.GAME.dollar_buffer = (G.GAME.dollar_buffer or 0) + card.ability.small_payout
+      card_eval_status_text(card, 'dollars', card.ability.small_payout, nil, nil, {instant = true})
+      G.GAME.dollar_buffer = 0;
+      return true
+    end
+  )}))
+end
+
+function payout_big(card)
+  G.E_MANAGER:add_event(Event({
+    trigger = "before",
+    delay = 0.7,
+    blocking = true,
+    func = (function()
+      if G.GAME.blind:get_type() ~= "Boss" then return true end
+      --sendDebugMessage("Big trigger detected, should pay out $"..card.ability.big_payout)
+      ease_dollars(card.ability.big_payout, true)
+      G.GAME.dollar_buffer = (G.GAME.dollar_buffer or 0) + card.ability.big_payout
+      card_eval_status_text(card, 'dollars', card.ability.big_payout, nil, nil, {instant = true})
+      G.GAME.dollar_buffer = 0;
+      return true
+    end
+  )}))
+end
+
+draw_from_deck_to_hand_ref = G.FUNCS.draw_from_deck_to_hand
+G.FUNCS.draw_from_deck_to_hand = function(e)
+  local postage = draw_from_deck_to_hand_ref(e)
+  if G.GAME.blind.name == 'The Serpent' and not G.GAME.blind.disabled and (G.GAME.current_round.hands_played > 0 or G.GAME.current_round.discards_used > 0) then
+    for k, v in pairs(find_joker("Matador")) do
+      payout_big(v)
+    end
+  end
+  return postage
+end
+
+local modify_hand_ref = Blind.modify_hand
+function Blind:modify_hand(cards, poker_hands, text, mult, hand_chips)
+  local old_chips = hand_chips
+  local old_mult = mult
+  local modded = false
+  mult, hand_chips, modded = modify_hand_ref(self, cards, poker_hands, text, mult, hand_chips)
+  if (mult < old_mult and mult > 0) and (hand_chips < old_chips and hand_chips > 0) then
+    for k, v in pairs(find_joker("Matador")) do
+      payout_big(v)
+    end
+  end
+  return mult, hand_chips, modded
 end
 ----------------------------------------------
 ------------MOD CODE END----------------------
