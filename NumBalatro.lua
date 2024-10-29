@@ -204,17 +204,20 @@
         calculate = function(self,card,context)
           if context.joker_main and context.cardarea == G.jokers and context.poker_hands then
             if next(context.poker_hands["Full House"]) then
-             if self.ability.h_size < 3 then
+             if card.ability.h_size < 3 then
                 G.hand:change_size(1)
-                self.ability.h_size = self.ability.h_size + 1
-                card_eval_status_text(self, 'extra', nil, nil, nil, {message = self.ability.h_size.."/3", colour = G.C.GREEN})
+                card.ability.h_size = card.ability.h_size + 1
+                card_eval_status_text(card, 'extra', nil, nil, nil, {message = card.ability.h_size.."/3", colour = G.C.GREEN})
                 return nil
               end
-            elseif self.ability.h_size > 0 then
-              G.hand:change_size(-self.ability.h_size)
-              self.ability.h_size = 0
-              card_eval_status_text(self, 'extra', nil, nil, nil, {message = localize("k_reset"), colour = G.C.RED})
+            elseif card.ability.h_size > 0 then
+              G.hand:change_size(-card.ability.h_size)
+              card.ability.h_size = 0
+              card_eval_status_text(card, 'extra', nil, nil, nil, {message = localize("k_reset"), colour = G.C.RED})
             end
+          end
+          if context.selling_card and context.card == card then
+            G.hand:change_size(-card.ability.h_size)
           end
         end
       },
@@ -533,6 +536,16 @@
         loc_vars = {
           "x_mult"
         },
+        calculate = function(self,card,context)
+          if context.joker_main and context.cardarea == G.jokers and next(get_X_same(card.ability.x_mult, context.scoring_hand)) and #get_X_same(card.ability.x_mult, context.scoring_hand)[1] == card.ability.x_mult then
+            return {
+              message = localize{type='variable',key='a_xmult',vars={card.ability.x_mult}},
+              colour = G.C.MULT,
+              Xmult_mod = card.ability.x_mult or nil,
+              card = card
+            }
+          end
+        end,
         atlas = true
       },
       wily = {
@@ -601,6 +614,16 @@
         loc_vars = {
           "x_mult"
         },
+        calculate = function(self,card,context)
+          if context.joker_main and context.cardarea == G.jokers and next(get_X_same(card.ability.x_mult, context.scoring_hand)) and #get_X_same(card.ability.x_mult, context.scoring_hand)[1] == card.ability.x_mult then
+            return {
+              message = localize{type='variable',key='a_xmult',vars={card.ability.x_mult}},
+              colour = G.C.MULT,
+              Xmult_mod = card.ability.x_mult or nil,
+              card = card
+            }
+          end
+        end,
         atlas = false
       },
       clever = {
@@ -1040,7 +1063,7 @@
         calculate = function(self,card,context)
           local suits = {}
           local number = 0
-          if context.joker_main and context.full_hand and context.cardarea == G.jokers then
+          if context.joker_main and context.cardarea == G.jokers and context.full_hand and context.cardarea == G.jokers then
             for k, v in pairs(context.full_hand) do
               if v.ability.name == "Wild Card" then
                 number = number + 1
@@ -1399,7 +1422,7 @@ end
 
 local get_straight_ref = get_straight
 function get_straight(hand)
-  sendDebugMessage("Override successful.")
+  --sendDebugMessage("Override successful.")
   local postage = {}
   local results = {}
   local can_loop = next(find_joker('Superposition'))
@@ -1407,10 +1430,10 @@ function get_straight(hand)
   local can_skip = next(find_joker('Shortcut'))
   local skipped = false
   if can_loop then
-    sendDebugMessage("Superposition detected.")
+    --sendDebugMessage("Superposition detected.")
   end
   if can_skip then
-    sendDebugMessage("Shortcut detected.")
+    --sendDebugMessage("Shortcut detected.")
   end
   if #hand < (four and 4 or 5) then
     return postage

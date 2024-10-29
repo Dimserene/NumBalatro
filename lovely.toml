@@ -72,6 +72,17 @@ overwrite = true
 payload = '''if false then'''
 match_indent = true
 
+[[patches]]
+[patches.pattern]
+target = "card.lua"
+pattern = "if self.ability.name ~= 'Seeing Double' and self.ability.x_mult > 1 and (self.ability.type == '' or next(context.poker_hands[self.ability.type])) then"
+position = "at"
+overwrite = true
+payload = '''if self.ability.name ~= 'Seeing Double' and self.ability.name ~= 'The Duo' and self.ability.name ~= 'The Trio' and self.ability.x_mult > 1 and (self.ability.type == '' or next(context.poker_hands[self.ability.type])) then'''
+match_indent = true
+
+
+
 # [[patches]]
 # [patches.pattern]
 # target = "functions/common_events.lua"
