@@ -7,7 +7,7 @@
 --- PRIORITY: 214
 ----------------------------------------------
 ------------MOD CODE -------------------------
-    local numbuh_mod = SMODS.current_mod
+    local NumBalatro = SMODS.current_mod
     suit_bias = {
       odds = 2,
       name = "Suit Bias: #1#",
@@ -487,6 +487,7 @@
           }
         },
         loc_vars = {
+          "type",
           "t_chips"
         },
         calculate = function(self, card, context)
@@ -660,7 +661,7 @@
         loc_text = {
           text = {
             "{C:mult}+#2#{} Mult if hand",
-            "contains {C:attention}1{}",
+            "contains {C:attention}#1#{}",
             "{C:mult}+#3#{} Mult if hand",
             "has exactly {C:attention}4{} scoring cards"
           }
@@ -1084,74 +1085,76 @@
         atlas_hc = true,
       },
     }
-    for k,v in pairs(oldJokers) do
-      sendDebugMessage(tostring(G.P_CENTERS["j_"..k].name))
-      if v.atlas_hc then
-        SMODS.Atlas{
-          key = k.."_hc",
-          path = "j_"..k..(string.sub(v.name,-5) == "Joker" and "_joker" or "").."_hc.png",
-          px = 71,
-          py = 95
-        }
-        SMODS.Atlas{
-          key = k,
-          path = "j_"..k..(string.sub(v.name,-5) == "Joker" and "_joker" or "").."_lc.png",
-          px = 71,
-          py = 95
-        }
-      elseif v.atlas then
+    if NumBalatro.config.alter_vanilla_jokers then
+      for k,v in pairs(oldJokers) do
+        sendDebugMessage(tostring(G.P_CENTERS["j_"..k].name))
+        if v.atlas_hc then
           SMODS.Atlas{
-            key = k,
-            path = "j_"..k..(string.sub(v.name,-5) == "Joker" and "_joker" or "")..".png",
+            key = k.."_hc",
+            path = "j_"..k..(string.sub(v.name,-5) == "Joker" and "_joker" or "").."_hc.png",
             px = 71,
             py = 95
           }
-      end
-      --sendDebugMessage(" "..tostring(v.atlas))
-      local center = (G.P_CENTERS["j_"..k.."_joker"]) or (G.P_CENTERS["j_"..k])
-      
-      --sendDebugMessage(" ("..tostring(G.P_CENTERS["j_"..k].pos.x)..", "..tostring(G.P_CENTERS["j_"..k].pos.y)..")")
-      if v.atlas or v.atlas_hc then
-        sendDebugMessage("Using custom atlas for "..v.name)
-      else
-        sendDebugMessage("Using position ("..center.pos.x..", "..center.pos.y..") of default atlas for "..v.name)
-      end
-      SMODS.Joker:take_ownership(center.key,{
-        set = "Joker",
-        name = v.name or center.name,
-        loc_txt = {
-          name = v.loc_text.name or v.name,
-          text = v.loc_text.text
-        },
-        key= "j_"..k,
-        atlas = v.atlas and k or center.atlas,
-        lc_atlas = v.atlas_hc and k or center.atlas,
-        hc_atlas = v.atlas_hc and k.."_hc" or center.atlas,
-        config = v.config,
-        calculate = v.calculate,
-        pos = (v.atlas or v.atlas_hc) and {x=0,y=0} or center.pos,
-        blueprint_compat = v.blueprint or true,
-        eternal_compat = v.eternal or true,
-        perishable_compat = v.perishable or true,
-        loc_vars = (type(v.loc_vars) == "function") and v.loc_vars or function(self, info_queue, card)
-          local postage = {}
-          for key, val in pairs(v.loc_vars) do
-            if string.sub(val,1,4) == "odds" then
-              table.insert(postage,G.GAME.probabilities.normal)
+          SMODS.Atlas{
+            key = k,
+            path = "j_"..k..(string.sub(v.name,-5) == "Joker" and "_joker" or "").."_lc.png",
+            px = 71,
+            py = 95
+          }
+        elseif v.atlas then
+            SMODS.Atlas{
+              key = k,
+              path = "j_"..k..(string.sub(v.name,-5) == "Joker" and "_joker" or "")..".png",
+              px = 71,
+              py = 95
+            }
+        end
+        --sendDebugMessage(" "..tostring(v.atlas))
+        local center = (G.P_CENTERS["j_"..k.."_joker"]) or (G.P_CENTERS["j_"..k])
+        
+        --sendDebugMessage(" ("..tostring(G.P_CENTERS["j_"..k].pos.x)..", "..tostring(G.P_CENTERS["j_"..k].pos.y)..")")
+        if v.atlas or v.atlas_hc then
+          sendDebugMessage("Using custom atlas for "..v.name)
+        else
+          sendDebugMessage("Using position ("..center.pos.x..", "..center.pos.y..") of default atlas for "..v.name)
+        end
+        SMODS.Joker:take_ownership(center.key,{
+          set = "Joker",
+          name = v.name or center.name,
+          loc_txt = {
+            name = v.loc_text.name or v.name,
+            text = v.loc_text.text
+          },
+          key= "j_"..k,
+          atlas = v.atlas and k or center.atlas,
+          lc_atlas = v.atlas_hc and k or center.atlas,
+          hc_atlas = v.atlas_hc and k.."_hc" or center.atlas,
+          config = v.config,
+          calculate = v.calculate,
+          pos = (v.atlas or v.atlas_hc) and {x=0,y=0} or center.pos,
+          blueprint_compat = v.blueprint or true,
+          eternal_compat = v.eternal or true,
+          perishable_compat = v.perishable or true,
+          loc_vars = (type(v.loc_vars) == "function") and v.loc_vars or function(self, info_queue, card)
+            local postage = {}
+            for key, val in pairs(v.loc_vars) do
+              if string.sub(val,1,4) == "odds" then
+                table.insert(postage,G.GAME.probabilities.normal)
+              end
+              table.insert(postage,v.config[val] or center.config[val])
+              if string.sub(val,1,2) == "t_" and type(postage[#postage]) == "number" then
+                local maths = postage[#postage] * ((v.name == "Wily Joker" or v.name == "Zany Joker") and 2 or 3)
+                table.insert(postage,maths)
+              end
             end
-            table.insert(postage,v.config[val] or center.config[val])
-            if string.sub(val,1,2) == "t_" and type(postage[#postage]) == "number" then
-              local maths = postage[#postage] * ((v.name == "Wily Joker" or v.name == "Zany Joker") and 2 or 3)
-              table.insert(postage,maths)
+            sendDebugMessage((v.name or center.name)..":")
+            for key, val in pairs(postage) do
+              sendDebugMessage("- "..key..": "..tostring(val))
             end
-          end
-          sendDebugMessage((v.name or center.name)..":")
-          for key, val in pairs(postage) do
-            sendDebugMessage("- "..key..": "..tostring(val))
-          end
-          return {vars = postage}
-        end,
-      })
+            return {vars = postage}
+          end,
+        })
+      end
     end
     for k,v in pairs(newJokers) do
       SMODS.Atlas{
@@ -1191,6 +1194,16 @@
           return {vars = postage}
         end,
       }
+    end
+    NumBalatro.config_tab = function()
+    local scale = 5/6
+    return {n=G.UIT.ROOT, config = {align = "cl", minh = G.ROOM.T.h*0.25, padding = 0.0, r = 0.1, colour = G.C.GREY}, nodes = {
+        {n = G.UIT.R, config = { padding = 0.05 }, nodes = {
+            {n = G.UIT.C, config = { align = "cr", minw = G.ROOM.T.w*0.25, padding = 0.05 }, nodes = {
+                create_toggle{ label = localize("alter_vanilla_jokers"), info = localize("alter_vanilla_jokers_desc"), active_colour = G.C.BLUE, ref_table = NumBalatro.config, ref_value = "alter_vanilla_jokers"},
+            }},
+        }}
+    }}
     end
     
 local startrun_ref = Game.start_run
