@@ -1086,6 +1086,18 @@
       },
     }
     if NumBalatro.config.alter_vanilla_jokers then
+      SMODS.Atlas{
+          key = "Jokers_hc",
+          path = "Jokers_hc.png",
+          px = 71,
+          py = 95
+        }
+      SMODS.Atlas{
+          key = "Jokers",
+          path = "Jokers.png",
+          px = 71,
+          py = 95
+        }
       for k,v in pairs(oldJokers) do
         sendDebugMessage(tostring(G.P_CENTERS["j_"..k].name))
         if v.atlas_hc then
@@ -1114,7 +1126,7 @@
         
         --sendDebugMessage(" ("..tostring(G.P_CENTERS["j_"..k].pos.x)..", "..tostring(G.P_CENTERS["j_"..k].pos.y)..")")
         if v.atlas or v.atlas_hc then
-          sendDebugMessage("Using custom atlas for "..v.name)
+          sendDebugMessage("Using position ("..center.pos.x..", "..center.pos.y..") of custom atlas for "..v.name)
         else
           sendDebugMessage("Using position ("..center.pos.x..", "..center.pos.y..") of default atlas for "..v.name)
         end
@@ -1126,12 +1138,12 @@
             text = v.loc_text.text
           },
           key= "j_"..k,
-          atlas = v.atlas and k or center.atlas,
-          lc_atlas = v.atlas_hc and k or center.atlas,
-          hc_atlas = v.atlas_hc and k.."_hc" or center.atlas,
+          atlas = v.atlas and (NumBalatro.config.separate_joker_loading and k or "Jokers") or center.atlas,
+          lc_atlas = v.atlas_hc and (NumBalatro.config.separate_joker_loading and k.."_lc" or "Jokers") or center.atlas,
+          hc_atlas = v.atlas_hc and (NumBalatro.config.separate_joker_loading and k or "Jokers").."_hc" or center.atlas,
           config = v.config,
           calculate = v.calculate,
-          pos = (v.atlas or v.atlas_hc) and {x=0,y=0} or center.pos,
+          pos = (NumBalatro.config.separate_joker_loading and (v.atlas or v.atlas_hc)) and {x=0,y=0} or center.pos,
           blueprint_compat = v.blueprint or true,
           eternal_compat = v.eternal or true,
           perishable_compat = v.perishable or true,
@@ -1201,6 +1213,9 @@
         {n = G.UIT.R, config = { padding = 0.05 }, nodes = {
             {n = G.UIT.C, config = { align = "cr", minw = G.ROOM.T.w*0.25, padding = 0.05 }, nodes = {
                 create_toggle{ label = localize("alter_vanilla_jokers"), info = localize("alter_vanilla_jokers_desc"), active_colour = G.C.BLUE, ref_table = NumBalatro.config, ref_value = "alter_vanilla_jokers"},
+            }},
+            {n = G.UIT.C, config = { align = "cr", minw = G.ROOM.T.w*0.25, padding = 0.05 }, nodes = {
+                create_toggle{ label = localize("separate_joker_loading"), info = localize("separate_joker_loading_desc"), active_colour = G.C.BLUE, ref_table = NumBalatro.config, ref_value = "separate_joker_loading"},
             }},
         }}
     }}
